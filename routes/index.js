@@ -1,6 +1,8 @@
 var express = require('express');
 var request = require('request');
+var feedReader = require('feed-read');
 var router = express.Router();
+var feed = "https://news.google.com/news?output=rss";
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -92,7 +94,9 @@ function receivedMessage(event) {
         break;
 
       default:
-        sendTextMessage(senderID, messageText);
+        getArticles(function(err, articles) {
+          sendTextMessage(senderID, articles[0].title);
+        });
     }
   } else if (messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
@@ -132,6 +136,22 @@ function callSendAPI(messageData) {
       console.error(error);
     }
   });
+}
+
+
+function getArticles(callback) {
+   feedReader(feed, function(err, articles) {
+      if (err) {
+         callback(err);
+      } else {
+         if (articles.length > 0) {
+            callback(null, articles);
+         } else {
+            callback("No articles recieved! :(");
+         }
+      }
+
+   });
 }
 
 module.exports = router;
